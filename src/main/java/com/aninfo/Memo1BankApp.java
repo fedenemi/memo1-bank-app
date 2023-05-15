@@ -1,7 +1,10 @@
 package com.aninfo;
 
 import com.aninfo.model.Account;
+import com.aninfo.model.Transaction;
 import com.aninfo.service.AccountService;
+import com.aninfo.service.TransactionService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,6 +29,8 @@ public class Memo1BankApp {
 
 	@Autowired
 	private AccountService accountService;
+	@Autowired
+	private TransactionService transactionService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Memo1BankApp.class, args);
@@ -50,14 +55,17 @@ public class Memo1BankApp {
 
 	@PutMapping("/accounts/{cbu}")
 	public ResponseEntity<Account> updateAccount(@RequestBody Account account, @PathVariable Long cbu) {
+
 		Optional<Account> accountOptional = accountService.findById(cbu);
 
 		if (!accountOptional.isPresent()) {
 			return ResponseEntity.notFound().build();
 		}
+
 		account.setCbu(cbu);
 		accountService.save(account);
 		return ResponseEntity.ok().build();
+
 	}
 
 	@DeleteMapping("/accounts/{cbu}")
@@ -75,12 +83,32 @@ public class Memo1BankApp {
 		return accountService.deposit(cbu, sum);
 	}
 
+	@PostMapping("accounts/{cbu}/transaction")
+	public Transaction createTransaction(@PathVariable Long cbu, @RequestParam Double sum, @RequestParam String type) { return transactionService.createTransaction(cbu, sum, type); }
+
+
+	@GetMapping("/accounts/{cbu}/transactions")
+	public Collection<Transaction> getTransactions(@PathVariable Long cbu) {
+		return transactionService.getTransactionsByCbu(cbu);
+	}
+
+	@GetMapping("/transactions/{id}")
+	public ResponseEntity<Transaction> getTransaction(@PathVariable Long id) {
+		Optional<Transaction> transactionOptional = transactionService.findById(id);
+		return ResponseEntity.of(transactionOptional);
+	}
+
+	@DeleteMapping("/transactions/{id}")
+	public void deleteTransaction(@PathVariable Long id) {
+		transactionService.deleteById(id);
+	}
+
 	@Bean
 	public Docket apiDocket() {
 		return new Docket(DocumentationType.SWAGGER_2)
-			.select()
-			.apis(RequestHandlerSelectors.any())
-			.paths(PathSelectors.any())
-			.build();
+				.select()
+				.apis(RequestHandlerSelectors.any())
+				.paths(PathSelectors.any())
+				.build();
 	}
 }
